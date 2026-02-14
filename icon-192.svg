@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0a0b16"/><stop offset="100%" stop-color="#121430"/></linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00e8ff"/><stop offset="100%" stop-color="#ff00cc"/></linearGradient>
+    <filter id="neon"><feGaussianBlur stdDeviation="8" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <rect x="8" y="8" width="496" height="496" rx="92" fill="none" stroke="url(#glow)" stroke-width="2" opacity="0.3"/>
+  <!-- Waveform bars -->
+  <g filter="url(#neon)" opacity="0.9">
+    <rect x="100" y="220" width="20" height="72" rx="4" fill="#00e8ff"/>
+    <rect x="135" y="180" width="20" height="152" rx="4" fill="#00d4ff"/>
+    <rect x="170" y="140" width="20" height="232" rx="4" fill="#00bfff"/>
+    <rect x="205" y="100" width="20" height="312" rx="4" fill="#5533ff"/>
+    <rect x="240" y="80" width="20" height="352" rx="4" fill="#7733ff"/>
+    <rect x="275" y="100" width="20" height="312" rx="4" fill="#cc00ee"/>
+    <rect x="310" y="140" width="20" height="232" rx="4" fill="#ff00cc"/>
+    <rect x="345" y="180" width="20" height="152" rx="4" fill="#ff00aa"/>
+    <rect x="380" y="220" width="20" height="72" rx="4" fill="#ff0088"/>
+  </g>
+  <text x="256" y="460" font-family="sans-serif" font-weight="900" font-size="56" text-anchor="middle" fill="url(#glow)" letter-spacing="8">WAVFORGE</text>
+</svg>
