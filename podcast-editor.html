@@ -229,9 +229,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg-deep);color:var(--text
   box-shadow:0 0 8px rgba(0,232,255,.5);
 }
 
-/* EQ visualization strip */
-.screen-eq{height:20px;display:flex;align-items:flex-end;gap:1px;padding:0 2px;position:relative;z-index:5}
-.eq-bar{flex:1;background:linear-gradient(0deg,#00e8ff66,#ff00cc44);border-radius:1px 1px 0 0;min-height:2px;transition:height .08s ease}
+/* EQ visualization — large canvas */
+.screen-eq-wrap{height:70px;position:relative;z-index:5;border-radius:8px;overflow:hidden;background:#060810;box-shadow:inset 0 1px 4px rgba(0,0,0,.4)}
+#screen-eq-canvas{width:100%;height:100%;display:block}
+
+/* Up Next queue */
+.screen-upnext{position:relative;z-index:5;padding:4px 0 0}
+.upnext-label{font-family:'Syne',sans-serif;font-size:8px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#4a4a6a;padding:0 2px 3px}
+.upnext-item{display:flex;align-items:center;gap:6px;padding:3px 2px;font-size:10px;color:#6a6a8a;overflow:hidden}
+.upnext-item .upnext-num{font-family:'JetBrains Mono',monospace;font-size:8px;color:#3a3a5a;min-width:14px}
+.upnext-item .upnext-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Syne',sans-serif;font-weight:500}
+.upnext-item .upnext-dur{font-family:'JetBrains Mono',monospace;font-size:8px;color:#3a3a5a}
 
 /* Click Wheel */
 .ipod-wheel-area{
@@ -437,6 +445,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   .wheel-label.wl-prev{left:10px}
   .wheel-label.wl-next{right:10px}
   .screen-title{font-size:13px}
+  .screen-eq-wrap{height:55px}
   #mini-player{width:calc(100vw - 24px);right:12px;bottom:28px;border-radius:16px}
   #status-bar{height:22px;font-size:8px;padding:0 8px}
   .modal{min-width:280px;max-width:calc(100vw - 32px);padding:16px}
@@ -577,7 +586,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
           <input type="range" class="screen-seek-bar" id="playerSeek" min="0" max="100" value="0" step="0.1" oninput="playerSeekTo(this.value)">
           <span class="screen-seek-time right" id="playerTimeRight">0:00</span>
         </div>
-        <div class="screen-eq" id="screenEQ"></div>
+        <div class="screen-eq-wrap"><canvas id="screen-eq-canvas"></canvas></div>
+        <div class="screen-upnext" id="screenUpNext">
+          <div class="upnext-label">Up Next</div>
+        </div>
       </div>
     </div>
     <div class="ipod-wheel-area">
@@ -952,24 +964,117 @@ function drawMiniArtwork(){
   ctx.drawImage(artCanvas,0,0,artCanvas.width,artCanvas.height,0,0,40,40);
 }
 
-// ===== SCREEN EQ BARS =====
-const eqContainer=document.getElementById('screenEQ');
-const eqBars=[];const EQ_COUNT=32;
-for(let i=0;i<EQ_COUNT;i++){const b=document.createElement('div');b.className='eq-bar';b.style.height='2px';eqContainer.appendChild(b);eqBars.push(b)}
+// ===== SCREEN EQ VISUALIZER (canvas-based) =====
+const eqCanvas = document.getElementById('screen-eq-canvas');
+const eqCtx = eqCanvas.getContext('2d');
+let eqPhase = 0;
+
+function resizeEqCanvas(){
+  const wrap = eqCanvas.parentElement;
+  if(wrap){eqCanvas.width=wrap.clientWidth;eqCanvas.height=wrap.clientHeight}
+}
+resizeEqCanvas();
 
 function updateScreenEQ(){
   requestAnimationFrame(updateScreenEQ);
   if(currentView!=='player')return;
   masterAnalyser.getByteFrequencyData(dataArray);
-  const step=Math.floor(bufferLength/EQ_COUNT);
-  for(let i=0;i<EQ_COUNT;i++){
+  masterAnalyser.getByteTimeDomainData(timeDataArray);
+  
+  const w=eqCanvas.width,h=eqCanvas.height;
+  // Fade trail
+  eqCtx.fillStyle='rgba(6,8,16,0.25)';
+  eqCtx.fillRect(0,0,w,h);
+  
+  // Get average energy for reactivity
+  let avg=0,bass=0;
+  for(let i=0;i<bufferLength;i++)avg+=dataArray[i];
+  avg/=bufferLength;
+  for(let i=0;i<20;i++)bass+=dataArray[i];
+  bass/=20;
+  
+  eqPhase+=0.04+(avg/5000);
+  
+  // === Layer 1: Frequency bars (back) ===
+  const barCount=40,step=Math.floor(bufferLength/barCount),barW=(w/barCount)-1;
+  for(let i=0;i<barCount;i++){
     let sum=0;for(let j=0;j<step;j++)sum+=dataArray[i*step+j];
     const val=sum/step/255;
-    const h=Math.max(2,val*18);
-    const hue=180+(i/EQ_COUNT)*120;
-    eqBars[i].style.height=h+'px';
-    eqBars[i].style.background=`linear-gradient(0deg,hsla(${hue},100%,60%,0.7),hsla(${hue+30},80%,50%,0.3))`;
+    const bh=val*h*0.85;
+    const hue=180+(i/barCount)*120;
+    const gr=eqCtx.createLinearGradient(0,h,0,h-bh);
+    gr.addColorStop(0,`hsla(${hue},100%,60%,0.5)`);
+    gr.addColorStop(0.5,`hsla(${hue},80%,50%,0.25)`);
+    gr.addColorStop(1,`hsla(${hue},60%,40%,0.05)`);
+    eqCtx.fillStyle=gr;
+    eqCtx.fillRect(i*(barW+1),h-bh,barW,bh);
+    // Bright cap
+    eqCtx.fillStyle=`hsla(${hue},100%,75%,0.6)`;
+    eqCtx.fillRect(i*(barW+1),h-bh-1,barW,1.5);
   }
+  
+  // === Layer 2: Bouncing sine wave ===
+  eqCtx.lineWidth=2.5;
+  const sGr=eqCtx.createLinearGradient(0,0,w,0);
+  sGr.addColorStop(0,'#00e8ff');sGr.addColorStop(0.4,'#ff00cc');sGr.addColorStop(0.7,'#7733ff');sGr.addColorStop(1,'#00e8ff');
+  eqCtx.strokeStyle=sGr;
+  eqCtx.shadowBlur=8;eqCtx.shadowColor='#00e8ff66';
+  eqCtx.beginPath();
+  for(let x=0;x<w;x++){
+    const idx=Math.floor((x/w)*bufferLength);
+    const td=(timeDataArray[idx]/128.0-1);
+    const freq=dataArray[Math.min(idx,bufferLength-1)]/255;
+    const bounce=Math.sin(eqPhase+x*0.02)*freq*h*0.15;
+    const wave=td*h*0.3;
+    const y=h/2+wave+bounce;
+    if(x===0)eqCtx.moveTo(x,y);else eqCtx.lineTo(x,y);
+  }
+  eqCtx.stroke();
+  eqCtx.shadowBlur=0;
+  
+  // === Layer 3: Mirror wave (softer) ===
+  eqCtx.globalAlpha=0.3;
+  eqCtx.lineWidth=1.5;
+  eqCtx.strokeStyle='#ff00cc88';
+  eqCtx.beginPath();
+  for(let x=0;x<w;x++){
+    const idx=Math.floor((x/w)*bufferLength);
+    const td=(timeDataArray[idx]/128.0-1);
+    const freq=dataArray[Math.min(idx,bufferLength-1)]/255;
+    const bounce=Math.sin(eqPhase*1.3+x*0.025+1)*freq*h*0.12;
+    const y=h/2-td*h*0.25+bounce;
+    if(x===0)eqCtx.moveTo(x,y);else eqCtx.lineTo(x,y);
+  }
+  eqCtx.stroke();
+  eqCtx.globalAlpha=1;
+  
+  // === Layer 4: Bass pulse glow ===
+  const pulseR=bass/255;
+  if(pulseR>0.3){
+    const pg=eqCtx.createRadialGradient(w/2,h/2,0,w/2,h/2,w*0.4);
+    pg.addColorStop(0,`hsla(${artHueBase},100%,60%,${pulseR*0.06})`);
+    pg.addColorStop(1,'transparent');
+    eqCtx.fillStyle=pg;eqCtx.fillRect(0,0,w,h);
+  }
+}
+
+// ===== UP NEXT QUEUE =====
+function updateUpNext(){
+  const container=document.getElementById('screenUpNext');
+  if(!container)return;
+  let html='<div class="upnext-label">Up Next</div>';
+  if(playlist.length<=1){
+    html+='<div class="upnext-item"><span style="color:#3a3a5a;font-size:9px;font-style:italic">No tracks in queue</span></div>';
+  }else{
+    // Show next 3 tracks
+    for(let i=1;i<=3;i++){
+      const idx=(playerCurrentIdx+i)%playlist.length;
+      if(idx===playerCurrentIdx)break;
+      const item=playlist[idx];
+      html+=`<div class="upnext-item"><span class="upnext-num">${i}</span><span class="upnext-name">${item.name}</span><span class="upnext-dur">${fmtPT(item.duration)}</span></div>`;
+    }
+  }
+  container.innerHTML=html;
 }
 
 // ===== AUDIO PLAYER =====
@@ -979,7 +1084,7 @@ let playerIsPlaying=false,playerStartTime2=0,playerOffset2=0,playerAnimFrame=nul
 let playlistVisible=false;
 
 function playerImport(){const fi=document.getElementById('playerFileInput');fi.onchange=async e=>{for(const f of e.target.files)await playerAddFile(f);fi.value=''};fi.click()}
-async function playerAddFile(file){try{await unlockAudio();if(audioCtx.state==='suspended')await audioCtx.resume();const ab=await file.arrayBuffer(),buf=await audioCtx.decodeAudioData(ab);playlist.push({name:file.name.replace(/\.[^.]+$/,''),buffer:buf,duration:buf.duration});renderPlaylist();if(playerCurrentIdx===-1)playerLoadTrack(0);toast(`Added: ${file.name}`)}catch(e){toast(`Error: ${file.name}`)}}
+async function playerAddFile(file){try{await unlockAudio();if(audioCtx.state==='suspended')await audioCtx.resume();const ab=await file.arrayBuffer(),buf=await audioCtx.decodeAudioData(ab);playlist.push({name:file.name.replace(/\.[^.]+$/,''),buffer:buf,duration:buf.duration});renderPlaylist();updateUpNext();if(playerCurrentIdx===-1)playerLoadTrack(0);toast(`Added: ${file.name}`)}catch(e){toast(`Error: ${file.name}`)}}
 
 function renderPlaylist(){
   const pl=document.getElementById('playerPlaylist');
@@ -1005,6 +1110,7 @@ function playerLoadTrack(idx){
   document.getElementById('playerTimeRight').textContent=fmtPT(playerBuffer.duration);
   renderPlaylist();
   generateArtwork(playlist[idx].name);
+  updateUpNext();
   syncMiniPlayer();
 }
 
@@ -1108,7 +1214,7 @@ function setStatus(m){document.getElementById('statusLeft').textContent=m}
 function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500)}
 
 // ===== INIT =====
-window.addEventListener('resize',()=>{resizeViz();resizePlayerBg();if(currentView==='editor')drawAllWaveforms()});
+window.addEventListener('resize',()=>{resizeViz();resizePlayerBg();resizeEqCanvas();if(currentView==='editor')drawAllWaveforms()});
 resizeViz();resizePlayerBg();drawVisualizer();drawPlayerViz();animateArtwork();updateScreenEQ();drawTimeline();setTool('select');
 
 // Generate default artwork
