@@ -145,6 +145,92 @@ html,body{height:100%;overflow:hidden;background:var(--bg-deep);color:var(--text
 .player-drop-hint{font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;padding:12px;text-align:center;border:1px dashed var(--border-subtle);border-radius:6px;width:100%;max-width:500px;cursor:pointer;transition:all .2s}
 .player-drop-hint:hover{border-color:var(--accent-cyan)44;color:var(--text-secondary)}
 
+/* ===== MINI PLAYER ===== */
+#mini-player{
+  position:fixed;bottom:32px;right:16px;z-index:500;
+  width:320px;
+  background:var(--bg-secondary)ee;border:1px solid var(--border-subtle);border-radius:12px;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 8px 40px rgba(0,0,0,.5),0 0 20px var(--accent-cyan)08;
+  display:none;flex-direction:column;overflow:hidden;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+}
+#mini-player.visible{display:flex}
+#mini-player.collapsed{width:280px}
+#mini-player.dragging{opacity:.9;cursor:grabbing}
+.mini-header{
+  display:flex;align-items:center;padding:8px 10px;gap:8px;
+  background:var(--bg-primary)cc;border-bottom:1px solid var(--border-subtle);
+  cursor:grab;user-select:none;
+}
+.mini-header:active{cursor:grabbing}
+.mini-viz{width:36px;height:36px;border-radius:50%;flex-shrink:0;position:relative;
+  background:radial-gradient(circle,var(--bg-deep) 40%,var(--bg-secondary) 100%);
+  box-shadow:0 0 10px var(--accent-cyan)11;overflow:hidden;
+}
+#mini-viz-canvas{width:100%;height:100%;border-radius:50%}
+.mini-disc{position:absolute;inset:0;margin:auto;width:14px;height:14px;border-radius:50%;
+  background:conic-gradient(var(--bg-deep),var(--bg-tertiary),var(--bg-deep));
+  display:flex;align-items:center;justify-content:center;
+}
+.mini-disc.spinning{animation:spin-disc 3s linear infinite}
+.mini-disc-dot{width:5px;height:5px;border-radius:50%;background:var(--accent-cyan);box-shadow:0 0 4px var(--accent-cyan)88}
+.mini-info{flex:1;min-width:0}
+.mini-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:600;letter-spacing:.8px;
+  color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-artist{font-size:9px;color:var(--text-dim);margin-top:1px;letter-spacing:.3px}
+.mini-close{
+  width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid transparent;color:var(--text-dim);cursor:pointer;
+  font-size:12px;transition:all .15s;flex-shrink:0;
+}
+.mini-close:hover{color:var(--accent-orange);border-color:var(--accent-orange)44;background:var(--accent-orange)0a}
+.mini-expand{
+  width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid transparent;color:var(--text-dim);cursor:pointer;
+  font-size:10px;transition:all .15s;flex-shrink:0;
+}
+.mini-expand:hover{color:var(--accent-cyan);border-color:var(--accent-cyan)44;background:var(--accent-cyan)0a}
+.mini-seek-row{padding:4px 12px 0;display:flex;align-items:center;gap:6px}
+.mini-seek{
+  flex:1;-webkit-appearance:none;height:3px;border-radius:2px;outline:none;cursor:pointer;
+  background:var(--bg-deep);
+}
+.mini-seek::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;background:var(--accent-cyan);border-radius:50%;cursor:pointer;box-shadow:0 0 6px var(--accent-cyan)44}
+.mini-time{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-dim);min-width:30px}
+.mini-time.right{text-align:right}
+.mini-controls{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 12px 8px}
+.mc-btn{
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid var(--border-subtle);
+  color:var(--text-secondary);cursor:pointer;transition:all .15s;font-size:13px;
+}
+.mc-btn:hover{border-color:var(--accent-cyan)33;color:var(--text-primary)}
+.mc-btn.mc-main{
+  width:36px;height:36px;font-size:16px;
+  background:linear-gradient(135deg,var(--accent-cyan)18,var(--accent-violet)18);
+  border-color:var(--accent-cyan)33;color:var(--accent-cyan);
+}
+.mc-btn.mc-main:hover{border-color:var(--accent-cyan)66;box-shadow:0 0 12px var(--accent-cyan)22}
+.mini-progress-bar{height:2px;background:var(--bg-deep);position:relative;overflow:hidden}
+.mini-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent-cyan),var(--accent-magenta));width:0%;transition:width .3s linear}
+
+@media(max-width:768px){
+  #mini-player{width:calc(100vw - 24px);right:12px;bottom:28px;border-radius:10px}
+  #mini-player.collapsed{width:calc(100vw - 24px)}
+  .mini-header{padding:6px 8px;gap:6px}
+  .mini-viz{width:32px;height:32px}
+  .mini-title{font-size:9px}
+  .mc-btn{width:28px;height:28px;font-size:12px}
+  .mc-btn.mc-main{width:34px;height:34px;font-size:14px}
+}
+
+@media(pointer:coarse){
+  .mc-btn{width:34px;height:34px}
+  .mc-btn.mc-main{width:40px;height:40px}
+  .mini-seek::-webkit-slider-thumb{width:14px;height:14px}
+}
+
 #status-bar{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:var(--bg-primary);border-top:1px solid var(--border-subtle);font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;position:relative;z-index:100;flex-shrink:0}
 #status-bar::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent-violet)22,transparent)}
 
@@ -320,9 +406,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
     <button class="hdr-btn" onclick="importFiles()">&#11014; IMPORT</button>
     <button class="hdr-btn" onclick="showExportModal()">&#11015; EXPORT</button>
     <button class="hdr-btn primary" onclick="addTrack()">+ TRACK</button>
+    <button class="hdr-btn" onclick="toggleMiniPlayer()" title="Mini Player" id="miniToggleBtn">&#9835; MINI</button>
   </div>
   <div class="tab-actions" id="playerActions" style="display:none">
     <button class="hdr-btn" onclick="playerImport()">&#11014; ADD FILES</button>
+    <button class="hdr-btn" onclick="toggleMiniPlayer()" title="Mini Player">&#9724; MINI</button>
   </div>
 </header>
 
@@ -388,6 +476,34 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
     <div class="player-volume-row"><span class="player-vol-icon" onclick="playerToggleMute()">&#128266;</span><input type="range" class="player-vol-slider" id="playerVolume" min="0" max="1" step="0.01" value="1" oninput="playerSetVolume(this.value)"></div>
     <div class="player-playlist" id="playerPlaylist"></div>
     <div class="player-drop-hint" onclick="playerImport()">+ Drop or click to add audio files</div>
+  </div>
+</div>
+
+<!-- MINI PLAYER -->
+<div id="mini-player">
+  <div class="mini-header" id="miniDragHandle">
+    <div class="mini-viz">
+      <canvas id="mini-viz-canvas"></canvas>
+      <div class="mini-disc" id="miniDisc"><div class="mini-disc-dot"></div></div>
+    </div>
+    <div class="mini-info">
+      <div class="mini-title" id="miniTitle">No Track</div>
+      <div class="mini-artist" id="miniMeta">—</div>
+    </div>
+    <button class="mini-expand" onclick="expandFromMini()" title="Expand">&#9635;</button>
+    <button class="mini-close" onclick="closeMiniPlayer()" title="Close">&times;</button>
+  </div>
+  <div class="mini-seek-row">
+    <span class="mini-time" id="miniTimeLeft">0:00</span>
+    <input type="range" class="mini-seek" id="miniSeek" min="0" max="100" value="0" step="0.1" oninput="playerSeekTo(this.value)">
+    <span class="mini-time right" id="miniTimeRight">0:00</span>
+  </div>
+  <div class="mini-controls">
+    <button class="mc-btn" onclick="playerPrev()">&#9198;</button>
+    <button class="mc-btn" onclick="playerSkipBack()">&#9194;</button>
+    <button class="mc-btn mc-main" id="miniPlayBtn" onclick="playerToggle()">&#9654;</button>
+    <button class="mc-btn" onclick="playerSkipFwd()">&#9193;</button>
+    <button class="mc-btn" onclick="playerNext()">&#9197;</button>
   </div>
 </div>
 
@@ -765,6 +881,144 @@ function drawPlayerViz(){
     pVCtx.beginPath();pVCtx.moveTo(cx+Math.cos(a)*ir2,cy+Math.sin(a)*ir2);pVCtx.lineTo(cx+Math.cos(a)*or,cy+Math.sin(a)*or);pVCtx.stroke()}
   pVCtx.shadowBlur=0;
 }
+
+// ===== MINI PLAYER =====
+let miniPlayerVisible = false;
+const miniVizCanvas = document.getElementById('mini-viz-canvas');
+const miniVizCtx = miniVizCanvas.getContext('2d');
+miniVizCanvas.width = 36; miniVizCanvas.height = 36;
+
+function toggleMiniPlayer(){
+  if(miniPlayerVisible){closeMiniPlayer();return}
+  miniPlayerVisible = true;
+  document.getElementById('mini-player').classList.add('visible');
+  switchView('editor'); // go back to editor with mini floating
+  syncMiniPlayer();
+  toast('Mini player active');
+}
+
+function closeMiniPlayer(){
+  miniPlayerVisible = false;
+  document.getElementById('mini-player').classList.remove('visible');
+}
+
+function expandFromMini(){
+  closeMiniPlayer();
+  switchView('player');
+}
+
+function syncMiniPlayer(){
+  if(!miniPlayerVisible) return;
+  const title = document.getElementById('playerTitle').textContent;
+  const meta = document.getElementById('playerMeta').textContent;
+  document.getElementById('miniTitle').textContent = title || 'No Track';
+  document.getElementById('miniMeta').textContent = meta || '—';
+  
+  if(playerBuffer){
+    document.getElementById('miniSeek').max = playerBuffer.duration;
+  }
+  
+  if(playerIsPlaying){
+    document.getElementById('miniPlayBtn').innerHTML = '&#9208;';
+    document.getElementById('miniDisc').classList.add('spinning');
+  } else {
+    document.getElementById('miniPlayBtn').innerHTML = '&#9654;';
+    document.getElementById('miniDisc').classList.remove('spinning');
+  }
+}
+
+// Sync mini player time display with main player
+function updateMiniTime(){
+  if(!miniPlayerVisible) return;
+  const ct = getCPT();
+  document.getElementById('miniSeek').value = ct;
+  document.getElementById('miniTimeLeft').textContent = fmtPT(ct);
+  if(playerBuffer) document.getElementById('miniTimeRight').textContent = fmtPT(Math.max(0, playerBuffer.duration - ct));
+}
+
+// Draw mini visualizer ring
+function drawMiniViz(){
+  requestAnimationFrame(drawMiniViz);
+  if(!miniPlayerVisible) return;
+  masterAnalyser.getByteFrequencyData(dataArray);
+  const w=36,h=36,cx=18,cy=18;
+  miniVizCtx.clearRect(0,0,w,h);
+  const bars=24,step=Math.floor(bufferLength/bars);
+  for(let i=0;i<bars;i++){
+    let sum=0;for(let j=0;j<step;j++)sum+=dataArray[i*step+j];
+    const val=sum/step/255,a=(i/bars)*Math.PI*2-Math.PI/2;
+    const ir=10,or=ir+val*6,hue=180+(i/bars)*160;
+    miniVizCtx.strokeStyle=`hsla(${hue},100%,60%,${0.3+val*0.5})`;
+    miniVizCtx.lineWidth=2;
+    miniVizCtx.beginPath();
+    miniVizCtx.moveTo(cx+Math.cos(a)*ir,cy+Math.sin(a)*ir);
+    miniVizCtx.lineTo(cx+Math.cos(a)*or,cy+Math.sin(a)*or);
+    miniVizCtx.stroke();
+  }
+}
+
+// Draggable mini player
+(function(){
+  const el=document.getElementById('mini-player');
+  const handle=document.getElementById('miniDragHandle');
+  let isDragging=false,startX,startY,origX,origY;
+  function onStart(e){
+    if(e.target.closest('.mini-close')||e.target.closest('.mini-expand'))return;
+    isDragging=true;el.classList.add('dragging');
+    const t=e.touches?e.touches[0]:e;
+    const rect=el.getBoundingClientRect();
+    startX=t.clientX;startY=t.clientY;origX=rect.left;origY=rect.top;
+  }
+  function onMove(e){
+    if(!isDragging)return;
+    const t=e.touches?e.touches[0]:e;
+    const dx=t.clientX-startX,dy=t.clientY-startY;
+    const nx=origX+dx,ny=origY+dy;
+    const mw=window.innerWidth-el.offsetWidth,mh=window.innerHeight-el.offsetHeight;
+    el.style.left=Math.max(0,Math.min(mw,nx))+'px';
+    el.style.top=Math.max(0,Math.min(mh,ny))+'px';
+    el.style.right='auto';el.style.bottom='auto';
+  }
+  function onEnd(){isDragging=false;el.classList.remove('dragging')}
+  handle.addEventListener('mousedown',onStart);
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onEnd);
+  handle.addEventListener('touchstart',onStart,{passive:true});
+  document.addEventListener('touchmove',onMove,{passive:true});
+  document.addEventListener('touchend',onEnd);
+})();
+
+// Patch existing player functions to sync mini player
+const _origPlayerPlay2 = playerPlay2;
+const _origPlayerPause2 = playerPause2;
+const _origPlayerLoadTrack = playerLoadTrack;
+
+playerPlay2 = async function(){
+  await _origPlayerPlay2();
+  syncMiniPlayer();
+};
+playerPause2 = function(){
+  _origPlayerPause2();
+  syncMiniPlayer();
+};
+playerLoadTrack = function(idx){
+  _origPlayerLoadTrack(idx);
+  syncMiniPlayer();
+};
+
+// Patch playerUpdateLoop to also update mini
+const _origPlayerUpdateLoop = playerUpdateLoop;
+playerUpdateLoop = function(){
+  if(!playerIsPlaying)return;
+  const ct=getCPT();
+  document.getElementById('playerSeek').value=ct;
+  document.getElementById('playerTimeLeft').textContent=fmtPT(ct);
+  if(playerBuffer)document.getElementById('playerTimeRight').textContent=fmtPT(Math.max(0,playerBuffer.duration-ct));
+  updateMiniTime();
+  playerAnimFrame=requestAnimationFrame(playerUpdateLoop);
+};
+
+drawMiniViz();
 
 // ===== MISC =====
 function setTool(t){currentTool=t;document.getElementById('selectTool').classList.toggle('active',t==='select');document.getElementById('cutTool').classList.toggle('active',t==='cut');document.querySelectorAll('.track-canvas-wrap').forEach(el=>{el.style.cursor=t==='cut'?'crosshair':'text'})}
